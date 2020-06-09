@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/section_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Title"
+        android:textSize="20sp" />
+
+
+    <TextView
+        android:id="@+id/section_parentNotebook"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/section_title"
+        android:text="Notebook"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/section_parentSectionGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/section_parentNotebook"
+        android:text="Section Group"
+        android:textSize="15sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/section_parentSectionGroup"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="2sp"
+            android:text="Start:"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/eventstart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1:30 PM 2/19/2019"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="5sp"
+            android:paddingEnd="2sp"
+            android:text="End:"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/eventend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1:30 PM 2/19/2019"
+            android:textSize="15sp" />
+    </LinearLayout>
+</RelativeLayout>
