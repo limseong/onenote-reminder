@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/sections_frag_relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -9,5 +11,19 @@
         android:layout_height="match_parent"
         android:divider="@color/colorPrimary"
         android:dividerHeight="2dp" />
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_refresh"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15sp"
+        android:layout_marginEnd="15sp"
+        android:layout_marginStart="15sp"
+        android:layout_marginTop="15sp"
+        android:backgroundTint="#9500ff"
+        android:src="@drawable/ic_refresh_black_24dp" />
 
 </RelativeLayout>

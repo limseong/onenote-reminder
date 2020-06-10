@@ -1,6 +1,5 @@
 package com.limseong.onenotereminder;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -44,18 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView mNavigationView;
     private View mHeaderView;
 
-
-
     private boolean mIsSignedIn = false;
     private String mUserName = null;
     private String mUserEmail = null;
     private AuthenticationHelper mAuthHelper = null;
     private boolean mAttemptInteractiveSignIn = false;
-
-
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
             setSignedInState(mIsSignedIn);
         }
 
-        // <InitialLoginSnippet>
         showProgressBar();
         // Get the authentication helper
         AuthenticationHelper.getInstance(getApplicationContext(),
@@ -115,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("AUTH", "Error creating auth helper", exception);
                     }
                 });
-        // </InitialLoginSnippet>
     }
 
     @Override
@@ -134,8 +124,6 @@ public class MainActivity extends AppCompatActivity {
             super.onBackPressed();
         }
     }
-
-
 
     private void setupDrawerContent(NavigationView navigationView) {
         navigationView.setNavigationItemSelectedListener(
@@ -217,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             menu.removeItem(R.id.nav_home);
             menu.removeItem(R.id.nav_calendar);
+            menu.removeItem(R.id.nav_sections);
             menu.removeItem(R.id.nav_signout);
         }
 
@@ -259,14 +248,16 @@ public class MainActivity extends AppCompatActivity {
 
         SectionsFragment sectionsFragment = null;
         if (!(currentFragment instanceof SectionsFragment)) {
+            // make view
             sectionsFragment = new SectionsFragment();
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new SectionsFragment())
+                    .replace(R.id.fragment_container, sectionsFragment)
                     //.add(R.id.fragment_container, sectionsFragment)
                     .commit();
-        }
 
-        SectionsPresenter sectionsPresenter = new SectionsPresenter(sectionsFragment);
+            // make presenter
+            new SectionsPresenter(sectionsFragment, getApplicationContext());
+        }
 
         mNavigationView.setCheckedItem(R.id.nav_sections);
     }

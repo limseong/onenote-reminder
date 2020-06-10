@@ -4,7 +4,6 @@
 // <ListenerSnippet>
 package com.limseong.onenotereminder.util;
 
-import com.limseong.onenotereminder.util.AuthenticationHelper;
 import com.microsoft.identity.client.exception.MsalException;
 
 public interface IAuthenticationHelperCreatedListener {

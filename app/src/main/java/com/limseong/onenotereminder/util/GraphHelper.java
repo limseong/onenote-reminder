@@ -20,8 +20,6 @@ import com.microsoft.graph.requests.extensions.IOnenoteSectionCollectionPage;
 import java.util.LinkedList;
 import java.util.List;
 
-// Singleton class - the app only needs a single instance
-// of the Graph client
 public class GraphHelper implements IAuthenticationProvider {
     private static GraphHelper INSTANCE = null;
     private IGraphServiceClient mClient = null;
@@ -73,8 +71,6 @@ public class GraphHelper implements IAuthenticationProvider {
         options.add(new QueryOption("orderby", "createdDateTime DESC"));
 
         // GET /me/events
-        //mClient.me().onenote().pages().buildRequest().get(callback);
-        //mClient.customRequest("https://graph.microsoft.com/v1.0/me/onenote/sections/ 0-9194AEBF12B27FAD!2938/pages", callback);
         String id = "...";
         CustomRequestBuilder builder = mClient.customRequest("/me/onenote/sections/" + id + "/pages");
         CustomRequest req = builder.buildRequest();
@@ -109,11 +105,4 @@ public class GraphHelper implements IAuthenticationProvider {
         // GET /me/onenote/sections/
         mClient.me().onenote().sections().buildRequest().get(callback);
     }
-
-    // Debug function to get the JSON representation of a Graph
-    // object
-    public String serializeObject(Object object) {
-        return mClient.getSerializer().serializeObject(object);
-    }
-    // </GetEventsSnippet>
 }

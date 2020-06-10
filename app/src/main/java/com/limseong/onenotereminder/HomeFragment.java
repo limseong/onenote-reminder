@@ -5,10 +5,17 @@
 package com.limseong.onenotereminder;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.limseong.onenotereminder.sections.SectionsPresenter;
+import com.limseong.onenotereminder.util.FileUtils;
+
+import java.io.IOException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,6 +58,17 @@ public class HomeFragment extends Fragment {
             TextView userName = homeView.findViewById(R.id.home_page_username);
             userName.setText(mUserName);
         }
+
+        FloatingActionButton fabDebug = homeView.findViewById(R.id.fab_debug);
+        fabDebug.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String path = FileUtils.getFilesDirAbsolutePath(getContext());
+                Log.d("PATH", path);
+                boolean hasDeleted = FileUtils.deleteFile(getContext(), SectionsPresenter.FILE_SECTION_NOTIFICATION);
+                Log.d("hasDeleted", hasDeleted+"");
+            }
+        });
 
         return homeView;
     }

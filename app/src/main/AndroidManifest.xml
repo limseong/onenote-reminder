@@ -33,7 +33,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="msauth"
-                    android:host="com.example.graphtutorial"
+                    android:host="com.limseong.onenotereminder"
                     android:path="/callback" />
             </intent-filter>
         </activity>

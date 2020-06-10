@@ -26,4 +26,16 @@
             android:textSize="20sp" />
     </LinearLayout>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_debug"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15sp"
+        android:layout_marginEnd="15sp"
+        android:layout_marginStart="15sp"
+        android:layout_marginTop="15sp"
+        android:backgroundTint="#9500ff"
+        android:src="@drawable/ic_launcher_foreground" />
 </RelativeLayout>
