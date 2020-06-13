@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.limseong.onenotereminder.BaseView;
 import com.limseong.onenotereminder.BasePresenter;
-import com.limseong.onenotereminder.data.SectionNotification;
+import com.limseong.onenotereminder.data.NotificationSettings;
 import com.microsoft.graph.models.extensions.OnenoteSection;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public interface SectionsContract {
 
     interface View extends BaseView<Presenter> {
 
-        void showSectionsList(List<OnenoteSection> list, SectionNotification notification);
+        void showSectionsList(List<OnenoteSection> list, NotificationSettings notification);
 
         void showRefreshError();
 
@@ -27,9 +27,9 @@ public interface SectionsContract {
 
         void refreshSections();
 
-        SectionNotification toggleSectionNotification(@NonNull android.view.View view,
-                                       @NonNull OnenoteSection section,
-                                       @NonNull boolean notificationState);
+        NotificationSettings toggleSectionNotification(@NonNull android.view.View view,
+                                                       @NonNull OnenoteSection section,
+                                                       @NonNull boolean notificationState);
 
     }
 }

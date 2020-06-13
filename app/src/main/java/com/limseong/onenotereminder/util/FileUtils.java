@@ -3,8 +3,11 @@ package com.limseong.onenotereminder.util;
 import android.content.Context;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -36,6 +39,31 @@ public class FileUtils {
         fis.close();
 
         return data;
+    }
+
+    public static void saveFileGson(Context context, String fileName, Object data, Gson gson)
+            throws IOException {
+        String json = gson.toJson(data);
+        FileUtils.saveFile(context, fileName, json);
+    }
+
+    public static <T> T loadFileGson(Context context, String fileName, Class<T> clazz, Gson gson) {
+        T loadedObject = null;
+        try {
+            byte[] data = FileUtils.loadFile(context, fileName);
+            String json = new String(data);
+            loadedObject = gson.fromJson(json, clazz);
+        }
+        catch (FileNotFoundException notFound) {
+            // if the file doesn't exists
+            ;
+        }
+        catch (IOException e) {
+            // something is wrong
+            Log.e("FileUtils", "loadFileGson() for" + clazz.getName() + " failed.", e);
+        }
+
+        return loadedObject;
     }
 
     public static String getFilesDirAbsolutePath(Context context) {

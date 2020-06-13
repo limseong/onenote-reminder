@@ -3,4 +3,8 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="toast_error_refresh">Error occurred while retrieving Onenote sections.</string>
+    <string name="notification_channel_id">8888</string>
+
+    <string name="file_sections">sections.json</string>
+    <string name="file_notification_settings">notification_settings.json</string>
 </resources>

@@ -12,7 +12,7 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.limseong.onenotereminder.R;
-import com.limseong.onenotereminder.data.SectionNotification;
+import com.limseong.onenotereminder.data.NotificationSettings;
 import com.microsoft.graph.models.extensions.OnenoteSection;
 
 import java.util.List;
@@ -43,10 +43,10 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
         mSectionsListener = new SectionsListener() {
             @Override
             public void onSectionClick(View view, OnenoteSection clickedSection, boolean notificationState) {
-                SectionNotification sn =
+                NotificationSettings sn =
                         mPresenter.toggleSectionNotification(view, clickedSection, notificationState);
                 mSectionsAdapter.updateSectionNotification(sn);
-                mSectionsAdapter.notifyDataSetChanged();
+                mSectionsAdapter.notifyDataSetChanged(); // reload ListView
             }
 
             @Override
@@ -80,7 +80,7 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
     }
 
     @Override
-    public void showSectionsList(final List<OnenoteSection> list, final SectionNotification notification) {
+    public void showSectionsList(final List<OnenoteSection> list, final NotificationSettings notification) {
         if (list == null)
             return;
 
@@ -136,7 +136,7 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
         private Context mContext;
         private int mResource;
         private SectionsListener mListener;
-        private SectionNotification mSectionNotification;
+        private NotificationSettings mNotificationSettings;
 
         private static class SectionViewHolder {
             TextView title;
@@ -145,12 +145,12 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
         }
 
         public SectionsAdapter(Context context, int resource, List<OnenoteSection> sections,
-                               SectionsListener listener, SectionNotification sectionNotification) {
+                               SectionsListener listener, NotificationSettings notificationSettings) {
             super(context, resource, sections);
             mContext = context;
             mResource = resource;
             mListener = listener;
-            mSectionNotification = sectionNotification;
+            mNotificationSettings = notificationSettings;
         }
 
         @NonNull
@@ -187,7 +187,7 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
 
             // set background color if the item is set to be notification on
             final boolean isNotificationSet =
-                    mSectionNotification.getSectionIdList().contains(section.id);
+                    mNotificationSettings.getSectionIdList().contains(section.id);
             if (isNotificationSet) {
                 convertView.setBackgroundColor(
                         ContextCompat.getColor(getContext(), R.color.colorSectionNotificationOn));
@@ -208,8 +208,8 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
             return convertView;
         }
 
-        public void updateSectionNotification(SectionNotification sectionNotification) {
-            mSectionNotification = sectionNotification;
+        public void updateSectionNotification(NotificationSettings notificationSettings) {
+            mNotificationSettings = notificationSettings;
         }
     }
 

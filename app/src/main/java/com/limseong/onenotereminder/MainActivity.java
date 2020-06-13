@@ -1,5 +1,6 @@
 package com.limseong.onenotereminder;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -17,9 +18,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity;
 
 import com.limseong.onenotereminder.sections.SectionsFragment;
 import com.limseong.onenotereminder.sections.SectionsPresenter;
+import com.limseong.onenotereminder.settings.SettingsFragment;
+import com.limseong.onenotereminder.settings.SettingsPresenter;
 import com.limseong.onenotereminder.util.AuthenticationHelper;
 import com.limseong.onenotereminder.util.GraphHelper;
 import com.limseong.onenotereminder.util.IAuthenticationHelperCreatedListener;
@@ -88,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         showProgressBar();
+
         // Get the authentication helper
         AuthenticationHelper.getInstance(getApplicationContext(),
                 new IAuthenticationHelperCreatedListener() {
@@ -135,9 +140,6 @@ public class MainActivity extends AppCompatActivity {
                             case R.id.nav_home:
                                 openHomeFragment(mUserName);
                                 break;
-                            case R.id.nav_calendar:
-                                openCalendarFragment();
-                                break;
                             case R.id.nav_signin:
                                 signIn();
                                 break;
@@ -145,10 +147,13 @@ public class MainActivity extends AppCompatActivity {
                                 signOut();
                                 break;
                             case R.id.nav_sections:
-                                /*Intent intent =
-                                        new Intent(MainActivity.this, SectionsActivity.class);
-                                startActivity(intent);*/
                                 openSectionsFragment();
+                                break;
+                            case R.id.nav_settings:
+                                openSettingsFragment();
+                                break;
+                            case R.id.nav_license:
+                                startActivity(new Intent(getApplicationContext(), OssLicensesMenuActivity.class));
                                 break;
                             default:
                                 break;
@@ -159,20 +164,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public void showProgressBar()
     {
@@ -204,8 +195,8 @@ public class MainActivity extends AppCompatActivity {
             menu.removeItem(R.id.nav_signin);
         } else {
             menu.removeItem(R.id.nav_home);
-            menu.removeItem(R.id.nav_calendar);
             menu.removeItem(R.id.nav_sections);
+            menu.removeItem(R.id.nav_settings);
             menu.removeItem(R.id.nav_signout);
         }
 
@@ -234,14 +225,6 @@ public class MainActivity extends AppCompatActivity {
         mNavigationView.setCheckedItem(R.id.nav_home);
     }
 
-    // Load the "Calendar" fragment
-    private void openCalendarFragment() {
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, new CalendarFragment())
-                .commit();
-        mNavigationView.setCheckedItem(R.id.nav_calendar);
-    }
-
     private void openSectionsFragment() {
         Fragment currentFragment = getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_container);
@@ -262,7 +245,25 @@ public class MainActivity extends AppCompatActivity {
         mNavigationView.setCheckedItem(R.id.nav_sections);
     }
 
-    // <SignInAndOutSnippet>
+    private void openSettingsFragment() {
+        Fragment currentFragment = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_container);
+
+        SettingsFragment settingsFragment = null;
+        if (!(currentFragment instanceof SettingsFragment)) {
+            // make view
+            settingsFragment = new SettingsFragment();
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, settingsFragment)
+                    .commit();
+
+            // make presenter
+            new SettingsPresenter(settingsFragment, getApplicationContext());
+        }
+
+        mNavigationView.setCheckedItem(R.id.nav_settings);
+    }
+
     private void signIn() {
         showProgressBar();
         // Attempt silent sign in first
@@ -277,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
         setSignedInState(false);
         openHomeFragment(mUserName);
     }
-    // </SignInAndOutSnippet>
 
     // Silently sign in - used if there is already a
     // user account in the MSAL cache
@@ -345,7 +345,6 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    // <GetUserCallbackSnippet>
     private ICallback<User> getUserCallback() {
         return new ICallback<User>() {
             @Override
@@ -385,5 +384,4 @@ public class MainActivity extends AppCompatActivity {
             }
         };
     }
-    // </GetUserCallbackSnippet>
 }

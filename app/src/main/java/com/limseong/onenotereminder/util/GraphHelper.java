@@ -1,17 +1,13 @@
 package com.limseong.onenotereminder.util;
 
-import android.util.Log;
-
 import com.google.gson.JsonObject;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ICallback;
-import com.microsoft.graph.http.CustomRequest;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.models.extensions.User;
 import com.microsoft.graph.options.Option;
 import com.microsoft.graph.options.QueryOption;
-import com.microsoft.graph.requests.extensions.CustomRequestBuilder;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.IEventCollectionPage;
 import com.microsoft.graph.requests.extensions.INotebookCollectionPage;
@@ -63,25 +59,26 @@ public class GraphHelper implements IAuthenticationProvider {
         mClient.me().onenote().notebooks().buildRequest().get(callback);
     }
 
-    public void getOnenotePages(String accessToken, ICallback<JsonObject> callback) {
+    public void getPagesInSection(String accessToken, String sectionId,
+                                         ICallback<JsonObject> callback) {
         mAccessToken = accessToken;
 
-        // Use query options to sort by created time
         final List<Option> options = new LinkedList<Option>();
-        options.add(new QueryOption("orderby", "createdDateTime DESC"));
+        options.add(new QueryOption("expand", "parentSection"));
+        options.add(new QueryOption("select", "id,title,links,parentSection"));
+        options.add(new QueryOption("top", "100"));
 
-        // GET /me/events
-        String id = "...";
-        CustomRequestBuilder builder = mClient.customRequest("/me/onenote/sections/" + id + "/pages");
-        CustomRequest req = builder.buildRequest();
+        // GET /me/onenote/sections/{id}/pages
+        String uri = "/me/onenote/sections/" + sectionId + "/pages";
 
-        Log.d("TEST", req.getRequestUrl().toString());
-        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+        //CustomRequestBuilder builder = mClient.customRequest(uri);
+        //CustomRequest req = builder.buildRequest();
+        //req.get(callback);
 
-        req.get(callback);
+        mClient.customRequest(uri).buildRequest(options).get(callback);
     }
 
-    // <GetEventsSnippet>
+
     public void getEvents(String accessToken, ICallback<IEventCollectionPage> callback) {
         mAccessToken = accessToken;
 
@@ -100,9 +97,9 @@ public class GraphHelper implements IAuthenticationProvider {
         mAccessToken = accessToken;
 
         final List<Option> options = new LinkedList<Option>();
-        options.add(new QueryOption("orderby", "createdDateTime DESC"));
+        options.add(new QueryOption("top", "100"));
 
-        // GET /me/onenote/sections/
-        mClient.me().onenote().sections().buildRequest().get(callback);
+        // GET /me/onenote/sections/top=100
+        mClient.me().onenote().sections().buildRequest(options).get(callback);
     }
 }

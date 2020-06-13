@@ -10,11 +10,6 @@
             android:title="Home" />
 
         <item
-            android:id="@+id/nav_calendar"
-            android:icon="@drawable/ic_menu_calendar"
-            android:title="Calendar" />
-
-        <item
             android:id="@+id/nav_sections"
             android:icon="@drawable/ic_collections_bookmark_black_24dp"
             android:title="Manage Sections" />
@@ -28,5 +23,15 @@
             android:id="@+id/nav_signin"
             android:icon="@drawable/ic_menu_signin"
             android:title="Sign In" />
+
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="Settings" />
+
+        <item
+            android:id="@+id/nav_license"
+            android:icon="@drawable/ic_code_black_24dp"
+            android:title="Licenses" />
     </group>
 </menu>

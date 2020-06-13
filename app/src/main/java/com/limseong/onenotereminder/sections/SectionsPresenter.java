@@ -9,7 +9,8 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.limseong.onenotereminder.data.SectionNotification;
+import com.limseong.onenotereminder.data.NotificationSettings;
+import com.limseong.onenotereminder.settings.SettingsPresenter;
 import com.limseong.onenotereminder.util.AuthenticationHelper;
 import com.limseong.onenotereminder.util.FileUtils;
 import com.limseong.onenotereminder.util.GraphHelper;
@@ -30,14 +31,11 @@ import java.util.List;
 
 public class SectionsPresenter implements SectionsContract.Presenter {
     public static String FILE_SECTIONS = "sections.json";
-    public static String FILE_SECTION_NOTIFICATION = "section_notification.json";
 
     @NonNull
     private final SectionsContract.View mSectionsView;
 
     private List<OnenoteSection> mSectionList;
-    private SectionNotification mSectionNotification; // has list of section ids with noti on
-
     private Gson mSectionGson;
     private Context mContext;
 
@@ -73,6 +71,7 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         // get saved sections first in internal storage
         List<OnenoteSection> sectionList = loadSections();
         if (sectionList == null) {
+            // if the section list has not been retrieved from MS Graph yet..
             refreshSections();
         }
         else {
@@ -80,14 +79,20 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         }
 
         // get saved section notification
-        SectionNotification sn = loadSectionNotification();
-        if (sn == null)
-            mSectionNotification = new SectionNotification();
-        else
-            mSectionNotification = sn;
+        NotificationSettings notificationSettings = FileUtils.loadFileGson(mContext,
+                SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, mSectionGson);
+        if (notificationSettings == null) {
+            notificationSettings = new NotificationSettings();
+            try {
+                FileUtils.saveFileGson(mContext, SettingsPresenter.FILE_NOTIFICATION_SETTINGS,
+                        notificationSettings, mSectionGson);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         // show sections with loaded data
-        mSectionsView.showSectionsList(mSectionList, mSectionNotification);
+        mSectionsView.showSectionsList(mSectionList, notificationSettings);
         mSectionsView.hideProgressBar();
     }
 
@@ -96,7 +101,7 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         // progress bar is displayed until the refresh job is finished
         mSectionsView.showProgressBar();
 
-        // Get a current access token
+        // Retrieve OneNote sections & pages in the sections.
         AuthenticationHelper.getInstance()
                 .acquireTokenSilently(new AuthenticationCallback() {
                     @Override
@@ -119,10 +124,12 @@ public class SectionsPresenter implements SectionsContract.Presenter {
     }
 
     @Override
-    public SectionNotification toggleSectionNotification(@NonNull View view,
-                                          @NonNull OnenoteSection clickedSection,
-                                          @NonNull boolean notificationState) {
-        List<String> notificationSectionIdList = mSectionNotification.getSectionIdList();
+    public NotificationSettings toggleSectionNotification(@NonNull View view,
+                                                          @NonNull OnenoteSection clickedSection,
+                                                          @NonNull boolean notificationState) {
+        NotificationSettings notificationSettings = FileUtils.loadFileGson(mContext,
+                SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, mSectionGson);
+        List<String> notificationSectionIdList = notificationSettings.getSectionIdList();
 
         // remove or add the clicked section to the list
         if (notificationState) {
@@ -130,20 +137,22 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         }
         else {
             if (notificationSectionIdList.contains(clickedSection.id))
-                return mSectionNotification;
+                return notificationSettings;
             notificationSectionIdList.add(clickedSection.id);
         }
 
         // save the modified data to internal storage
         try {
-            saveSectionNotification(mSectionNotification);
+            FileUtils.saveFileGson(mContext, SettingsPresenter.FILE_NOTIFICATION_SETTINGS,
+                    notificationSettings, mSectionGson);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return mSectionNotification;
+        return notificationSettings;
     }
 
+    // callback when retrieving OneNote sections from MS Graph finished
     private ICallback<IOnenoteSectionCollectionPage> getSectionsCallback() {
         return new ICallback<IOnenoteSectionCollectionPage>() {
             @Override
@@ -158,7 +167,9 @@ public class SectionsPresenter implements SectionsContract.Presenter {
                     mSectionsView.showRefreshError();
                 }
 
-                mSectionsView.showSectionsList(mSectionList, mSectionNotification);
+                NotificationSettings notificationSettings = FileUtils.loadFileGson(mContext,
+                        SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, mSectionGson);
+                mSectionsView.showSectionsList(mSectionList, notificationSettings);
                 mSectionsView.hideProgressBar();
             }
 
@@ -193,32 +204,5 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         }
 
         return list;
-    }
-
-    private void saveSectionNotification(SectionNotification sectionNotification)
-            throws IOException {
-        String json = mSectionGson.toJson(sectionNotification);
-        FileUtils.saveFile(mContext, FILE_SECTION_NOTIFICATION, json);
-    }
-
-    private SectionNotification loadSectionNotification() {
-        // load sections file
-        SectionNotification sn = null;
-
-        try {
-            byte[] data = FileUtils.loadFile(mContext, FILE_SECTION_NOTIFICATION);
-            String json = new String(data);
-            sn = mSectionGson.fromJson(json, SectionNotification.class);
-        }
-        catch (FileNotFoundException notFound) {
-            // if the file doesn't exists
-            ;
-        }
-        catch (IOException e) {
-            // something is wrong
-            Log.e(this.getClass().getName(), "loadSections() failed.", e);
-        }
-
-        return sn;
     }
 }

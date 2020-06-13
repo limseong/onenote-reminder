@@ -1,8 +1,14 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.android.gms.oss-licenses-plugin'
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 
     defaultConfig {
         applicationId "com.limseong.onenotereminder"
@@ -38,9 +44,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation 'com.google.android.material:material:1.1.0'
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0' // oss notice
 
     // Microsoft dependencies
     implementation 'com.microsoft.identity.client:msal:1.4.0'
     implementation 'com.microsoft.graph:microsoft-graph:1.7.1'
 
+    // Date & time picker
+    implementation 'com.wdullaer:materialdatetimepicker:4.2.3'
 }
