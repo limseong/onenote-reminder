@@ -9,22 +9,22 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.limseong.onenotereminder.R;
-import com.limseong.onenotereminder.data.NotificationSettings;
 import com.limseong.onenotereminder.data.Page;
-import com.limseong.onenotereminder.settings.SettingsPresenter;
+import com.limseong.onenotereminder.sections.SectionsPresenter;
 import com.limseong.onenotereminder.util.AuthenticationHelper;
-import com.limseong.onenotereminder.util.FileUtils;
 import com.limseong.onenotereminder.util.GraphHelper;
+import com.limseong.onenotereminder.util.PreferencesUtil;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.exception.MsalException;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -44,14 +44,20 @@ public class NotificationReceiver extends BroadcastReceiver {
         mContext = context;
 
         // load the list of sections set to be notified
-        Gson gson = new Gson();
-        NotificationSettings notificationSettings = FileUtils.loadFileGson(context,
-                SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, gson);
-        List<String> sectionIdList = notificationSettings.getSectionIdList();
+        String[] sectionIdArray = PreferencesUtil.getPreferences(mContext,
+                SectionsPresenter.PREF_ENABLED_SECTION_ID_LIST, String[].class);
+        List<String> sectionIdList;
+        if (sectionIdArray == null)
+            sectionIdList = new LinkedList<>();
+        else
+            sectionIdList = new LinkedList<String>(Arrays.asList(sectionIdArray));
 
-        // pick a section to be notified
+        Log.d("sectionIdList", Arrays.toString(sectionIdList.toArray()));
+
         if (sectionIdList == null || sectionIdList.isEmpty())
             return;
+
+        // pick a section to be notified
         String pickedSectionId = sectionIdList.get((new Random()).nextInt(sectionIdList.size()));
 
         // retrieve pages of the section from MS Graph
@@ -109,15 +115,16 @@ public class NotificationReceiver extends BroadcastReceiver {
         };
     }
 
+    /**
+     * Sends a push notification with the given Onenote Page info
+     */
     private void notifyPage(Context context, Page page) {
-        // set intent
+        // set intent to the Onenote application
         Uri onenoteUri = Uri.parse(page.getClientUrl());
         Intent intent = new Intent(Intent.ACTION_VIEW, onenoteUri);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
-                intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
         // set notification manager and builder
         NotificationManager notificationManager =

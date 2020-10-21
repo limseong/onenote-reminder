@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 
 import com.limseong.onenotereminder.BaseView;
 import com.limseong.onenotereminder.BasePresenter;
-import com.limseong.onenotereminder.data.NotificationSettings;
 import com.microsoft.graph.models.extensions.OnenoteSection;
 
 import java.util.List;
@@ -13,9 +12,12 @@ public interface SectionsContract {
 
     interface View extends BaseView<Presenter> {
 
-        void showSectionsList(List<OnenoteSection> list, NotificationSettings notification);
-
-        void showRefreshError();
+        /**
+         * Show the given data on ListView
+         * @param sectionList Onenote sections retrieved from the server
+         * @param enabledSectionIdList the list of section ids previously set to be noti-enabled
+         */
+        void showSectionsList(List<OnenoteSection> sectionList, List<String> enabledSectionIdList);
 
         void showProgressBar();
 
@@ -27,9 +29,9 @@ public interface SectionsContract {
 
         void refreshSections();
 
-        NotificationSettings toggleSectionNotification(@NonNull android.view.View view,
-                                                       @NonNull OnenoteSection section,
-                                                       @NonNull boolean notificationState);
+        List<String> toggleSectionNotification(@NonNull android.view.View view,
+                                               @NonNull OnenoteSection section,
+                                               @NonNull boolean notificationState);
 
     }
 }

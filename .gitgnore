@@ -3,12 +3,14 @@
 *.aab
 *.dex
 *.class
+*.iml
 
 .gradle
 /build
 /captures
 
 .idea/
+.gradle/
 
 /local.properties
 
@@ -19,3 +21,5 @@
 
 .externalNativeBuild
 .cxx
+
+app/src/main/res/raw/msal_config.json

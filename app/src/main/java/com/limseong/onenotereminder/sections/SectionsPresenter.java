@@ -9,11 +9,9 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.limseong.onenotereminder.data.NotificationSettings;
-import com.limseong.onenotereminder.settings.SettingsPresenter;
 import com.limseong.onenotereminder.util.AuthenticationHelper;
-import com.limseong.onenotereminder.util.FileUtils;
 import com.limseong.onenotereminder.util.GraphHelper;
+import com.limseong.onenotereminder.util.PreferencesUtil;
 import com.microsoft.graph.concurrency.ICallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.requests.extensions.IOnenoteSectionCollectionPage;
@@ -24,18 +22,20 @@ import com.microsoft.identity.client.exception.MsalException;
 
 import androidx.annotation.NonNull;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class SectionsPresenter implements SectionsContract.Presenter {
-    public static String FILE_SECTIONS = "sections.json";
+    public static String PREF_SECTION_LIST = "section_list";
+    public static String PREF_ENABLED_SECTION_ID_LIST = "enabled_section_id_list";
 
     @NonNull
     private final SectionsContract.View mSectionsView;
 
     private List<OnenoteSection> mSectionList;
+    private List<String> mEnabledSectionIdList;
     private Gson mSectionGson;
     private Context mContext;
 
@@ -52,6 +52,7 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         gsonBuilder.setExclusionStrategies(new ExclusionStrategy() {
             @Override
             public boolean shouldSkipField(FieldAttributes f) {
+                // skip unnecessary fields
                 return f.getName().equals("rawObject") || f.getName().equals("serializer");
             }
 
@@ -69,7 +70,7 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         mSectionsView.showProgressBar();
 
         // get saved sections first in internal storage
-        List<OnenoteSection> sectionList = loadSections();
+        List<OnenoteSection> sectionList = loadSectionList();
         if (sectionList == null) {
             // if the section list has not been retrieved from MS Graph yet..
             refreshSections();
@@ -78,21 +79,10 @@ public class SectionsPresenter implements SectionsContract.Presenter {
             mSectionList = sectionList;
         }
 
-        // get saved section notification
-        NotificationSettings notificationSettings = FileUtils.loadFileGson(mContext,
-                SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, mSectionGson);
-        if (notificationSettings == null) {
-            notificationSettings = new NotificationSettings();
-            try {
-                FileUtils.saveFileGson(mContext, SettingsPresenter.FILE_NOTIFICATION_SETTINGS,
-                        notificationSettings, mSectionGson);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        mEnabledSectionIdList = loadEnabledSectionIdList();
 
         // show sections with loaded data
-        mSectionsView.showSectionsList(mSectionList, notificationSettings);
+        mSectionsView.showSectionsList(mSectionList, mEnabledSectionIdList);
         mSectionsView.hideProgressBar();
     }
 
@@ -124,32 +114,20 @@ public class SectionsPresenter implements SectionsContract.Presenter {
     }
 
     @Override
-    public NotificationSettings toggleSectionNotification(@NonNull View view,
+    public List<String> toggleSectionNotification(@NonNull View view,
                                                           @NonNull OnenoteSection clickedSection,
                                                           @NonNull boolean notificationState) {
-        NotificationSettings notificationSettings = FileUtils.loadFileGson(mContext,
-                SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, mSectionGson);
-        List<String> notificationSectionIdList = notificationSettings.getSectionIdList();
-
-        // remove or add the clicked section to the list
+        // toggle and save to the pref
         if (notificationState) {
-            notificationSectionIdList.remove(clickedSection.id);
+            mEnabledSectionIdList.remove(clickedSection.id);
         }
         else {
-            if (notificationSectionIdList.contains(clickedSection.id))
-                return notificationSettings;
-            notificationSectionIdList.add(clickedSection.id);
+            if (mEnabledSectionIdList.contains(clickedSection.id))
+                return mEnabledSectionIdList;
+            mEnabledSectionIdList.add(clickedSection.id);
         }
-
-        // save the modified data to internal storage
-        try {
-            FileUtils.saveFileGson(mContext, SettingsPresenter.FILE_NOTIFICATION_SETTINGS,
-                    notificationSettings, mSectionGson);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return notificationSettings;
+        PreferencesUtil.setPreferences(mContext, PREF_ENABLED_SECTION_ID_LIST, mEnabledSectionIdList);
+        return mEnabledSectionIdList;
     }
 
     // callback when retrieving OneNote sections from MS Graph finished
@@ -159,17 +137,9 @@ public class SectionsPresenter implements SectionsContract.Presenter {
             public void success(IOnenoteSectionCollectionPage sectionCollectionPage) {
                 mSectionList = sectionCollectionPage.getCurrentPage();
 
-                try {
-                    saveSections(mSectionList);
-                }
-                catch (IOException e) {
-                    Log.e(this.getClass().getName(), "saveSections() failed.", e);
-                    mSectionsView.showRefreshError();
-                }
-
-                NotificationSettings notificationSettings = FileUtils.loadFileGson(mContext,
-                        SettingsPresenter.FILE_NOTIFICATION_SETTINGS, NotificationSettings.class, mSectionGson);
-                mSectionsView.showSectionsList(mSectionList, notificationSettings);
+                // save and refresh
+                PreferencesUtil.setPreferencesGson(mContext, PREF_SECTION_LIST, mSectionList, mSectionGson);
+                mSectionsView.showSectionsList(mSectionList, mEnabledSectionIdList);
                 mSectionsView.hideProgressBar();
             }
 
@@ -180,29 +150,24 @@ public class SectionsPresenter implements SectionsContract.Presenter {
         };
     }
 
-    private void saveSections(List<OnenoteSection> sectionList) throws IOException {
-        String json = mSectionGson.toJson(sectionList);
-        FileUtils.saveFile(mContext, FILE_SECTIONS, json);
+    /**
+     * Returns the saved list of Onenote sections
+     */
+    private List<OnenoteSection> loadSectionList() {
+        OnenoteSection[] sectionArray = PreferencesUtil.getPreferencesGson(mContext,
+                PREF_SECTION_LIST, OnenoteSection[].class, mSectionGson);
+        return sectionArray == null ? null : new ArrayList<>(Arrays.asList(sectionArray));
     }
 
-    private List<OnenoteSection> loadSections() {
-        List<OnenoteSection> list = null;
-        // load sections file
-        try {
-            byte[] data = FileUtils.loadFile(mContext, FILE_SECTIONS);
-            String json = new String(data);
-            OnenoteSection[] arr = mSectionGson.fromJson(json, OnenoteSection[].class);
-            list = Arrays.asList(arr);
-        }
-        catch (FileNotFoundException notFound) {
-            // if the file doesn't exists
-            ;
-        }
-        catch (IOException e) {
-            // something is wrong
-            Log.e(this.getClass().getName(), "loadSections() failed.", e);
-        }
-
-        return list;
+    /**
+     * Returns the saved list of  notification-enabled Onenote section ids
+     */
+    private List<String> loadEnabledSectionIdList() {
+        String[] sectionIdArray = PreferencesUtil.getPreferences(mContext,
+                PREF_ENABLED_SECTION_ID_LIST, String[].class);
+        if (sectionIdArray == null)
+            return new LinkedList<>();
+        else
+            return new LinkedList<>(Arrays.asList(sectionIdArray));
     }
 }

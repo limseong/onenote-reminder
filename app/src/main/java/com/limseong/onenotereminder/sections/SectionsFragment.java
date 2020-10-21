@@ -12,9 +12,9 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.limseong.onenotereminder.R;
-import com.limseong.onenotereminder.data.NotificationSettings;
 import com.microsoft.graph.models.extensions.OnenoteSection;
 
+import java.util.Collections;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -43,9 +43,9 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
         mSectionsListener = new SectionsListener() {
             @Override
             public void onSectionClick(View view, OnenoteSection clickedSection, boolean notificationState) {
-                NotificationSettings sn =
+                List<String> enabledSectionList =
                         mPresenter.toggleSectionNotification(view, clickedSection, notificationState);
-                mSectionsAdapter.updateSectionNotification(sn);
+                mSectionsAdapter.updateEnabledSectionIdList(enabledSectionList);
                 mSectionsAdapter.notifyDataSetChanged(); // reload ListView
             }
 
@@ -80,28 +80,31 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
     }
 
     @Override
-    public void showSectionsList(final List<OnenoteSection> list, final NotificationSettings notification) {
-        if (list == null)
+    public void showSectionsList(final List<OnenoteSection> sectionList,
+                                 final List<String> enabledSectionIdList) {
+        if (sectionList == null)
             return;
 
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // create adapter
-                mSectionsAdapter = new SectionsAdapter(getActivity(),
-                        R.layout.section_item, list, mSectionsListener, notification);
-
-                // set adapter to show items on ListView
-                mSectionListView.setAdapter(mSectionsAdapter);
+        // sort before pass the list to the adapter
+        Collections.sort(sectionList, (a, b) -> {
+            int cmp = a.parentNotebook.displayName.compareTo(b.parentNotebook.displayName);
+            if (cmp == 0) {
+//                cmp = a.parentSectionGroup.displayName.compareTo(b.parentSectionGroup.displayName);
+//                if (cmp == 0) {
+                    cmp = a.displayName.compareTo(b.displayName);
+//                }
             }
+            return cmp;
         });
-    }
 
-    @Override
-    public void showRefreshError() {
-        Toast refreshErrorToast = Toast.makeText(getActivity(),
-                getString(R.string.toast_error_refresh), Toast.LENGTH_SHORT);
-        refreshErrorToast.show();
+        getActivity().runOnUiThread(() -> {
+            // create adapter
+            mSectionsAdapter = new SectionsAdapter(getActivity(),
+                    R.layout.section_item, sectionList, mSectionsListener, enabledSectionIdList);
+
+            // set adapter to show items on ListView
+            mSectionListView.setAdapter(mSectionsAdapter);
+        });
     }
 
     @Override
@@ -130,13 +133,14 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
         });
     }
 
-
-    // MVP, adapter is placed in View
+    /**
+     * Adapter for ListView in Manage Section Fragment. MVP, adapter is placed in View
+     */
     private static class SectionsAdapter extends ArrayAdapter<OnenoteSection> {
         private Context mContext;
         private int mResource;
         private SectionsListener mListener;
-        private NotificationSettings mNotificationSettings;
+        private List<String> mEnabledSectionIdList;
 
         private static class SectionViewHolder {
             TextView title;
@@ -145,12 +149,12 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
         }
 
         public SectionsAdapter(Context context, int resource, List<OnenoteSection> sections,
-                               SectionsListener listener, NotificationSettings notificationSettings) {
+                               SectionsListener listener, List<String> enabledSectionIdList) {
             super(context, resource, sections);
             mContext = context;
             mResource = resource;
             mListener = listener;
-            mNotificationSettings = notificationSettings;
+            mEnabledSectionIdList = enabledSectionIdList;
         }
 
         @NonNull
@@ -187,7 +191,7 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
 
             // set background color if the item is set to be notification on
             final boolean isNotificationSet =
-                    mNotificationSettings.getSectionIdList().contains(section.id);
+                    mEnabledSectionIdList.contains(section.id);
             if (isNotificationSet) {
                 convertView.setBackgroundColor(
                         ContextCompat.getColor(getContext(), R.color.colorSectionNotificationOn));
@@ -208,18 +212,24 @@ public class SectionsFragment extends Fragment implements SectionsContract.View 
             return convertView;
         }
 
-        public void updateSectionNotification(NotificationSettings notificationSettings) {
-            mNotificationSettings = notificationSettings;
+        public void updateEnabledSectionIdList(List<String> enabledSectionIdList) {
+            mEnabledSectionIdList = enabledSectionIdList;
         }
     }
 
-    // Custom onEvent actions
+    /**
+     * Custom onEvent actions for SectionsFragment
+     */
     public interface SectionsListener {
 
-        // when each item in ListView is clicked
+        /**
+         * Handles event when each item in ListView is clicked
+         */
         void onSectionClick(View view, OnenoteSection clickedSection, boolean notificationState);
 
-        // when refresh button is clicked
+        /**
+         * Handles event when refresh button is clicked
+         */
         void onRefreshClick();
     }
 }
